@@ -1,5 +1,5 @@
 // LazEstate Service Worker v2.5
-const CACHE_NAME = 'lazestate-v2.5';
+const CACHE_NAME = 'lazestate-v3.0';
 const OFFLINE_URL = './index.html';
 
 // Files to cache on install
@@ -12,10 +12,11 @@ const PRECACHE = [
 
 // Install — cache app shell
 self.addEventListener('install', event => {
+  self.skipWaiting(); // Take control immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => cache.addAll(PRECACHE))
-      .then(() => self.skipWaiting())
+      .catch(err => console.log('SW cache error:', err))
   );
 });
 
@@ -72,13 +73,21 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // App shell: cache-first, fallback to network, fallback to offline
+  // Network-first for HTML — always get fresh app shell
+  // Cache-first only for static assets
+  if (event.request.mode === 'navigate' || 
+      event.request.url.includes('index.html')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+    );
+    return;
+  }
+
+  // Cache-first for everything else
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
-      return fetch(event.request).catch(() =>
-        caches.match(OFFLINE_URL)
-      );
+      return fetch(event.request).catch(() => caches.match(OFFLINE_URL));
     })
   );
 });
