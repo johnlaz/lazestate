@@ -1,0 +1,12 @@
+# Jekyll config for GitHub Pages
+# Tells Jekyll not to ignore files starting with underscore or sw.js
+include:
+  - sw.js
+  - manifest.json
+  - icons/
+
+# Don't process these as Jekyll templates
+exclude:
+  - README.md
+  - "*.bat"
+  - "*.py"
